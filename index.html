@@ -523,7 +523,7 @@
       <h1>Article basics<span class="dot"></span></h1>
     </div>
   </header>
-  <p class="sub">Paste a draft, or load a PDF, then check SEO basics: title and meta length, link hygiene, keyword use, and repetition. Everything runs in your browser, nothing leaves this page.</p>
+  <p class="sub">Paste a draft or load a PDF, then check SEO basics: title and meta suggestions, link hygiene, keyword use, and repetition. Everything runs in your browser, works offline, no accounts or API keys needed.</p>
 
   <div class="pdf-loader">
     <span class="lbl">Load a PDF draft</span>
@@ -557,10 +557,10 @@
     </div>
 
     <div id="suggestionsWrap" style="display:none;">
-      <h2 class="section">Suggested titles <span class="section-hint">(pick one or use as inspiration)</span></h2>
+      <h2 class="section">Suggested titles <span class="section-hint">(click any to fill it into the checker below)</span></h2>
       <div id="titlesOut"></div>
 
-      <h2 class="section">Suggested meta descriptions</h2>
+      <h2 class="section">Suggested meta descriptions <span class="section-hint">(click any to fill it in)</span></h2>
       <div id="metasOut"></div>
     </div>
 
@@ -649,77 +649,128 @@ const STOPWORDS = new Set(['a','an','the','and','or','but','of','in','on','to','
 const TITLE_CASE_SMALL = new Set(['a','an','the','and','but','or','nor','for','yet','so',
   'at','by','in','of','on','to','up','as','is','if','it']);
 
-// ---------- Claude API (works free inside the artifact sandbox, fails gracefully elsewhere) ----------
-async function callClaude(prompt){
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1000,
-      messages: [{ role: "user", content: prompt }]
-    })
-  });
-  if(!res.ok) throw new Error("API error " + res.status);
-  return res.json();
+// ---------- Client-side title & meta generator (no API, no external calls) ----------
+
+function toTitleCase(str){
+  const small = new Set(['a','an','the','and','but','or','nor','for','yet','so','at','by','in','of','on','to','up','as','is','if','it']);
+  return str.split(/\s+/).map((w, i, arr) => {
+    const lower = w.toLowerCase();
+    if(i === 0 || i === arr.length - 1 || !small.has(lower)){
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    }
+    return lower;
+  }).join(' ');
 }
 
-function extractText(data){
-  if(!data || !data.content) return "";
-  return data.content.filter(b=>b.type === "text").map(b=>b.text).join("\n");
+function extractTopicFromDraft(draft, pkw){
+  // grab first 2 real sentences from draft as context
+  const clean = draft.replace(/title\s*tag\s*:.+/i,'').replace(/meta\s*desc(?:ription)?\s*:.+/i,'').replace(/-{3,}/g,'').trim();
+  const sentences = clean.split(/(?<=[.!?])\s+/).filter(s => s.length > 20);
+  const first = sentences[0] || '';
+  // try to pull a descriptive noun phrase near the keyword
+  const kwLower = pkw.toLowerCase();
+  const around = sentences.find(s => s.toLowerCase().includes(kwLower)) || first;
+  return { first, around, sentenceCount: sentences.length };
 }
 
-function parseJsonLoose(text){
-  const clean = text.replace(/```json/gi,'').replace(/```/g,'').trim();
-  const start = clean.indexOf('{');
-  const end = clean.lastIndexOf('}');
-  return JSON.parse((start !== -1 && end !== -1) ? clean.slice(start, end+1) : clean);
+function getYear(){
+  return new Date().getFullYear();
 }
 
-// ---------- Generate title & meta ----------
-document.getElementById('genBtn').addEventListener('click', async ()=>{
+function generateTitles(pkw, draft){
+  const tc = s => toTitleCase(s);
+  const year = getYear();
+  const kw = pkw.trim();
+
+  // extract a secondary topic hint from the draft
+  const ctx = extractTopicFromDraft(draft, pkw);
+  const words = kw.split(/\s+/);
+  const isPlural = kw.endsWith('s');
+  const shortKw = words.length > 4 ? words.slice(0, 4).join(' ') : kw;
+
+  // build a set of candidate titles from templates
+  const candidates = [
+    `${kw} ${year}`,
+    `${kw}: what to know in ${year}`,
+    `${kw} compared and reviewed`,
+    `${kw} you should know about`,
+    `the complete guide to ${kw}`,
+    `${kw} worth trying in ${year}`,
+    `${kw}: a practical guide for ${year}`,
+    `how to choose the right ${kw}`,
+    `${kw} that actually deliver`,
+    `${kw}: features, pricing, and verdict`,
+    `${shortKw} reviewed for ${year}`,
+    `everything you need to know about ${kw}`,
+    `why ${kw} ${isPlural ? 'matter' : 'matters'} in ${year}`,
+    `${kw}: honest take from a real user`,
+    `${kw} for teams and solo users`,
+  ];
+
+  // convert to Title Case, filter to 50-60 chars, dedupe
+  const seen = new Set();
+  const good = [];
+  for(const raw of candidates){
+    const titled = tc(raw);
+    if(titled.length >= 45 && titled.length <= 62 && !seen.has(titled.toLowerCase())){
+      seen.add(titled.toLowerCase());
+      good.push(titled);
+    }
+    if(good.length >= 6) break;
+  }
+
+  // if we don't have enough in the sweet spot, relax the length check
+  if(good.length < 4){
+    for(const raw of candidates){
+      const titled = tc(raw);
+      if(!seen.has(titled.toLowerCase())){
+        seen.add(titled.toLowerCase());
+        good.push(titled);
+      }
+      if(good.length >= 6) break;
+    }
+  }
+
+  return good.slice(0, 6);
+}
+
+function generateMetas(pkw, draft){
+  const year = getYear();
+  const kw = pkw.trim();
+  const ctx = extractTopicFromDraft(draft, pkw);
+
+  const candidates = [
+    `Comparing the top ${kw} by features, pricing, and real-world performance. Updated for ${year} with hands-on notes from actual use.`,
+    `A practical look at ${kw} for writers and teams who need results, not just feature lists. See how each one stacks up.`,
+    `Not sure which ${kw} fits your workflow? This guide breaks down what works, what doesn't, and what's worth paying for.`,
+    `We tested the leading ${kw} side by side. Here's what stood out on pricing, usability, and output quality in ${year}.`,
+    `Looking for ${kw}? Here's an honest breakdown covering strengths, weaknesses, and pricing so you can pick the right fit.`,
+    `Everything you need to evaluate ${kw} in one place. Real comparisons, real numbers, no filler.`,
+    `${kw.charAt(0).toUpperCase() + kw.slice(1)} ranked by what actually matters: output quality, ease of use, and cost in ${year}.`,
+    `Find the right fit from the top ${kw}. This guide covers features, pricing tiers, and practical trade-offs for ${year}.`,
+  ];
+
+  // filter to 140-155 char sweet spot, then relax
+  const good = candidates.filter(m => m.length >= 130 && m.length <= 158);
+  const rest = candidates.filter(m => !good.includes(m));
+  return [...good, ...rest].slice(0, 6);
+}
+
+document.getElementById('genBtn').addEventListener('click', ()=>{
   const draft = document.getElementById('draft').value.trim();
   const pkw = document.getElementById('pkw').value.trim();
-  const btn = document.getElementById('genBtn');
 
   if(!draft || !pkw){
     showStatus('Add a primary keyword and a draft first.', 'warn');
     return;
   }
 
-  btn.disabled = true;
-  btn.textContent = 'Generating...';
   clearStatus();
-
-  const prompt = `You are an SEO editor for a tech content site. Primary keyword: "${pkw}".
-
-Article draft (context, use only what you need):
----
-${draft.slice(0, 6000)}
----
-
-Write 4 SEO title tag options and 4 meta description options.
-
-Rules:
-- Titles: 50 to 60 characters, written in Title Case (capitalize major words, lowercase short joining words like a, an, the, and, of, in, on, to, for, unless they open or close the title), keyword placed near the front, no clickbait, no colon-as-crutch, no em dashes.
-- Meta descriptions: 140 to 155 characters, active voice, sentence case, the keyword worked in naturally, no em dashes, ending on a reason to click rather than a hard command.
-
-Return ONLY valid JSON, no markdown fences, no preamble, in exactly this shape:
-{"titles":["...","...","...","..."],"metas":["...","...","...","..."]}`;
-
-  try{
-    const data = await callClaude(prompt);
-    const parsed = parseJsonLoose(extractText(data));
-    renderSuggestions(parsed.titles || [], parsed.metas || [], pkw);
-    document.getElementById('suggestionsWrap').style.display = 'block';
-    showStatus('Suggestions ready. Click any to fill it into the checker below.', 'ok');
-  }catch(e){
-    showStatus('Suggestions are only available inside the Claude app. Use the manual checker below to verify your own title and meta.', 'warn');
-    document.getElementById('suggestionsWrap').style.display = 'none';
-  }finally{
-    btn.disabled = false;
-    btn.textContent = 'Generate title & meta suggestions';
-  }
+  const titles = generateTitles(pkw, draft);
+  const metas = generateMetas(pkw, draft);
+  renderSuggestions(titles, metas, pkw);
+  document.getElementById('suggestionsWrap').style.display = 'block';
+  showStatus('Suggestions ready. Click any to fill it into the checker below.', 'ok');
 });
 
 function renderSuggestions(titles, metas, pkw){
@@ -731,7 +782,7 @@ function renderSuggestions(titles, metas, pkw){
     const cls = len >= TITLE_WARN && len <= TITLE_MAX ? 'green' : (len > TITLE_MAX ? 'red' : 'amber');
     const pct = Math.min((len / (TITLE_MAX * 1.15)) * 100, 100);
     const has = pkw && t.toLowerCase().includes(pkw.toLowerCase());
-    return `<div class="item" style="cursor:pointer;" onclick="fillTitle(this)" data-value="${escapeHtml(t)}">
+    return `<div class="item" style="cursor:pointer;" onclick="fillTitle(this)" data-value="${t.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}">
       <div class="item-text">${escapeHtml(t)}</div>
       <div class="item-meta">
         <div class="gauge"><div class="gauge-fill ${cls}" style="width:${pct}%"></div></div>
@@ -746,7 +797,7 @@ function renderSuggestions(titles, metas, pkw){
     const cls = len >= META_WARN && len <= META_MAX ? 'green' : (len > META_MAX ? 'red' : 'amber');
     const pct = Math.min((len / (META_MAX * 1.1)) * 100, 100);
     const has = pkw && m.toLowerCase().includes(pkw.toLowerCase());
-    return `<div class="item" style="cursor:pointer;" onclick="fillMeta(this)" data-value="${escapeHtml(m)}">
+    return `<div class="item" style="cursor:pointer;" onclick="fillMeta(this)" data-value="${m.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}">
       <div class="item-text">${escapeHtml(m)}</div>
       <div class="item-meta">
         <div class="gauge"><div class="gauge-fill ${cls}" style="width:${pct}%"></div></div>
