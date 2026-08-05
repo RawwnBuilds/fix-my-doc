@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Article Basics | Magnaitic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --paper:#1501A4;
+    --paper-2:#EDEBFB;
+    --ink:#15104A;
+    --ink-soft:#5F5A8A;
+    --line:#DEDAF2;
+    --teal:#EC70BF;
+    --teal-dark:#C94F9E;
+    --brand-blue:#1501A4;
+    --brand-blue-deep:#0D0170;
+    --brand-pink:#EC70BF;
+    --amber:#A8790A;
+    --green:#3A6B35;
+    --red:#A33B2E;
+    --card:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    padding:36px 16px 60px;
+  }
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:36px 32px 70px;
+    background:var(--card);
+    border-radius:18px;
+    box-shadow:0 24px 70px rgba(9,3,70,0.35);
+  }
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:16px;
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:32px;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--brand-pink);
+    font-weight:600;
+  }
+  .dot{
+    display:inline-block;
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:var(--brand-pink);
+    margin-left:6px;
+    position:relative;
+    top:-14px;
+  }
+  .sub{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin:10px 0 22px;
+  }
+
+  .pdf-loader{
+    background:var(--card);
+    border:1.5px dashed var(--line);
+    border-radius:8px;
+    padding:14px 16px;
+    margin-bottom:24px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .pdf-loader .lbl{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--ink-soft);
+  }
+  input[type=file]{
+    font-family:'Work Sans', sans-serif;
+    font-size:13px;
+  }
+  .pdf-status{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--teal-dark);
+  }
+
+  nav.tabs{
+    display:flex;
+    gap:4px;
+    margin:0 0 24px;
+    border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  nav.tabs button{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    background:none;
+    border:none;
+    padding:10px 4px;
+    margin-right:22px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    position:relative;
+    top:1px;
+  }
+  nav.tabs button.active{
+    color:var(--ink);
+    border-bottom-color:var(--teal);
+  }
+  nav.tabs button:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible{
+    outline:2px solid var(--teal);
+    outline-offset:2px;
+  }
+  .panel{display:none;}
+  .panel.active{display:block;}
+  label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .help{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin:-2px 0 8px;
+  }
+  .field{margin-bottom:18px;}
+  input[type=text]{
+    width:100%;
+    font-family:'Work Sans', sans-serif;
+    font-size:15px;
+    padding:10px 12px;
+    border:1.5px solid var(--ink);
+    background:var(--card);
+    color:var(--ink);
+    border-radius:8px;
+  }
+  textarea{
+    width:100%;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    line-height:1.55;
+    padding:12px;
+    border:1.5px solid var(--ink);
+    background:var(--card);
+    color:var(--ink);
+    border-radius:8px;
+    resize:vertical;
+  }
+  #draft{min-height:160px;}
+  #urls{min-height:110px;}
+  .row-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin:14px 0 26px;
+  }
+  button.btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    background:var(--brand-blue);
+    color:#fff;
+    border:none;
+    padding:10px 16px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  button.btn:hover{background:var(--teal-dark);}
+  button.btn.secondary{
+    background:none;
+    color:var(--ink);
+    border:1.5px solid var(--ink);
+  }
+  button.btn.secondary:hover{background:var(--paper-2);}
+  button.btn:disabled{opacity:0.5; cursor:not-allowed;}
+  button.btn.small{
+    padding:5px 9px;
+    font-size:11px;
+  }
+  .status{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    padding:8px 10px;
+    border-left:3px solid var(--ink-soft);
+    margin-bottom:16px;
+    display:none;
+  }
+  .status.show{display:block;}
+  .status.warn{border-color:var(--amber); color:var(--amber);}
+  .status.error{border-color:var(--red); color:var(--red);}
+  .status.ok{border-color:var(--green); color:var(--green);}
+
+  h2.section{
+    font-family:'Baloo 2', sans-serif;
+    font-size:17px;
+    font-weight:600;
+    margin:28px 0 12px;
+    padding-bottom:6px;
+    border-bottom:1px solid var(--line);
+  }
+  .section-hint{
+    color:var(--ink-soft);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:none;
+  }
+  .item{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-left:3px solid var(--ink);
+    padding:12px 14px;
+    margin-bottom:10px;
+    border-radius:8px;
+  }
+  .item-text{
+    font-size:15px;
+    margin-bottom:8px;
+  }
+  .item-meta{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .gauge{
+    flex:1;
+    min-width:140px;
+    height:6px;
+    background:var(--line);
+    border-radius:6px;
+    position:relative;
+    overflow:hidden;
+  }
+  .gauge-fill{
+    height:100%;
+    border-radius:6px;
+  }
+  .gauge-fill.green{background:var(--green);}
+  .gauge-fill.amber{background:var(--amber);}
+  .gauge-fill.red{background:var(--red);}
+  .count{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    min-width:52px;
+  }
+  .kwflag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    padding:2px 6px;
+    border-radius:8px;
+  }
+  .kwflag.yes{color:var(--green);}
+  .kwflag.no{color:var(--red);}
+
+  .empty{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--ink-soft);
+    padding:20px 0;
+    border-top:1px dashed var(--line);
+    margin-top:6px;
+  }
+
+  .link-row{
+    background:var(--card);
+    border:1px solid var(--line);
+    padding:12px 14px;
+    margin-bottom:10px;
+    border-radius:8px;
+  }
+  .link-top{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .stamp{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    font-weight:600;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:3px 8px;
+    border-radius:8px;
+    border:1.5px solid currentColor;
+    transform:rotate(-1.5deg);
+    white-space:nowrap;
+  }
+  .stamp.us{color:var(--green);}
+  .stamp.nonus{color:var(--red);}
+  .stamp.unknown{color:var(--ink-soft);}
+  .urltext{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    word-break:break-all;
+    flex:1;
+    min-width:200px;
+  }
+  .urltext.original{color:var(--ink-soft); text-decoration:line-through; text-decoration-color:var(--line);}
+  .urltext.cleaned{color:var(--ink);}
+  .link-note{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:6px;
+  }
+  .link-actions{
+    display:flex;
+    gap:6px;
+    margin-top:8px;
+  }
+  .hint{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:-8px;
+    margin-bottom:16px;
+  }
+
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(140px,1fr));
+    gap:10px;
+    margin-bottom:22px;
+  }
+  .stat-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px 14px;
+  }
+  .stat-num{
+    font-family:'Baloo 2', sans-serif;
+    font-size:26px;
+    font-weight:700;
+    line-height:1;
+  }
+  .stat-lbl{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--ink-soft);
+    margin-top:4px;
+  }
+
+  .verdict{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    padding:2px 8px;
+    border-radius:8px;
+    display:inline-block;
+  }
+  .verdict.good{color:var(--green); border:1px solid var(--green);}
+  .verdict.warn{color:var(--amber); border:1px solid var(--amber);}
+  .verdict.bad{color:var(--red); border:1px solid var(--red);}
+
+  .kw-row{
+    background:var(--card);
+    border:1px solid var(--line);
+    padding:12px 14px;
+    margin-bottom:10px;
+    border-radius:8px;
+  }
+  .kw-row .kw-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:6px;
+  }
+  .kw-term{font-weight:600;}
+  .kw-details{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+
+  .dupe-pair{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-left:3px solid var(--amber);
+    padding:12px 14px;
+    margin-bottom:12px;
+    border-radius:8px;
+  }
+  .dupe-pair .sim{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--amber);
+    margin-bottom:8px;
+    display:block;
+  }
+  .dupe-snip{
+    font-size:13.5px;
+    padding:8px 10px;
+    background:var(--paper-2);
+    border-radius:8px;
+    margin-bottom:6px;
+  }
+
+  /* live checker styling */
+  .live-wrap{
+    position:relative;
+  }
+  .live-counter{
+    position:absolute;
+    right:12px;
+    bottom:12px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    pointer-events:none;
+  }
+  .live-counter.green{color:var(--green);}
+  .live-counter.amber{color:var(--amber);}
+  .live-counter.red{color:var(--red);}
+
+  /* footer */
+  .site-footer{
+    margin-top:44px;
+    padding-top:22px;
+    border-top:1px dashed var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+  .footer-links{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    flex-wrap:wrap;
+  }
+  .footer-links a{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:color 0.15s;
+  }
+  .footer-links a:hover{color:var(--ink);}
+  .footer-links svg{
+    width:16px;
+    height:16px;
+    fill:currentColor;
+    flex-shrink:0;
+  }
+  .bmc-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    font-weight:600;
+    color:#fff;
+    background:#FFDD00;
+    color:#1a1a1a;
+    padding:8px 14px;
+    border-radius:8px;
+    text-decoration:none;
+    transition:transform 0.15s;
+  }
+  .bmc-btn:hover{transform:scale(1.04);}
+  .bmc-btn svg{width:18px; height:18px; flex-shrink:0;}
+
+  @media (max-width:560px){
+    h1{font-size:26px;}
+    .item-meta{flex-direction:column; align-items:flex-start;}
+    .gauge{width:100%;}
+    .wrap{padding:24px 16px 50px;}
+    .site-footer{flex-direction:column; align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="kicker">Magnaitic / Proofing desk</div>
+      <h1>Article basics<span class="dot"></span></h1>
+    </div>
+  </header>
+  <p class="sub">Paste a draft, or load a PDF, then check SEO basics: title and meta length, link hygiene, keyword use, and repetition. Everything runs in your browser, nothing leaves this page.</p>
+
+  <div class="pdf-loader">
+    <span class="lbl">Load a PDF draft</span>
+    <input type="file" id="pdfInput" accept="application/pdf">
+    <span class="pdf-status" id="pdfStatus"></span>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="tm">Title &amp; meta</button>
+    <button class="tab-btn" data-tab="links">Link check</button>
+    <button class="tab-btn" data-tab="overview">Content check</button>
+  </nav>
+
+  <div id="status" class="status"></div>
+
+  <!-- TITLE & META PANEL -->
+  <section class="panel active" id="panel-tm">
+    <div class="field">
+      <label for="pkw">Primary keyword</label>
+      <p class="help">Used to check the title, meta, and keyword use on the Content check tab.</p>
+      <input type="text" id="pkw" placeholder="e.g. best claude alternatives">
+    </div>
+    <div class="field">
+      <label for="draft">Draft</label>
+      <p class="help">Paste the article text here, or use the PDF loader above. The Content check and Link check tabs read from this too.</p>
+      <textarea id="draft" placeholder="Paste the article draft here."></textarea>
+    </div>
+
+    <h2 class="section">Title tag <span class="section-hint">(Title Case, target 50-60 characters)</span></h2>
+    <p class="help">Type your title below. The counter turns green when you're in the sweet spot, red when you're over.</p>
+    <div class="field live-wrap">
+      <input type="text" id="titleInput" placeholder="e.g. Best Claude Alternatives for Content Writers in 2026">
+      <span class="live-counter" id="titleCounter">0/60</span>
+    </div>
+    <div id="titleFeedback"></div>
+
+    <h2 class="section">Meta description <span class="section-hint">(target 140-155 characters)</span></h2>
+    <p class="help">Type your meta description. Keep it under 155 characters so search engines don't truncate it.</p>
+    <div class="field live-wrap">
+      <textarea id="metaInput" rows="2" placeholder="e.g. Comparing the top Claude alternatives for SEO content, long-form writing, and research workflows. Updated for 2026." style="min-height:60px;"></textarea>
+      <span class="live-counter" id="metaCounter">0/155</span>
+    </div>
+    <div id="metaFeedback"></div>
+  </section>
+
+  <!-- LINK CHECK PANEL -->
+  <section class="panel" id="panel-links">
+    <div class="field">
+      <label for="urls">URLs (one per line)</label>
+      <p class="help">Pull links straight from the draft or a loaded PDF, or paste your own list.</p>
+      <textarea id="urls" placeholder="Paste links here, or pull them straight from the draft."></textarea>
+    </div>
+    <div class="hint">Cleaning strips tracking parameters (utm, fbclid, gclid, etc). The region check flags country-code domains, regional subdomains, and region-specific URL paths so you can swap them for US or global equivalents before publishing.</div>
+    <div class="row-actions">
+      <button class="btn secondary" id="extractBtn">Pull links from draft</button>
+      <button class="btn" id="testAllBtn">Clean &amp; check all</button>
+    </div>
+
+    <h2 class="section">Results</h2>
+    <div id="linksOut"><div class="empty">No links checked yet.</div></div>
+  </section>
+
+  <!-- CONTENT CHECK PANEL -->
+  <section class="panel" id="panel-overview">
+    <div class="field">
+      <label for="skw">Other keywords to check (optional)</label>
+      <p class="help">Comma-separated. These are the supporting terms you'd expect a well-rounded article to touch on.</p>
+      <input type="text" id="skw" placeholder="e.g. pricing, use cases, free plan">
+    </div>
+    <div class="row-actions">
+      <button class="btn" id="runOverviewBtn">Run content check</button>
+    </div>
+
+    <div id="overviewOut"><div class="empty">Nothing checked yet. Add a draft on the Title &amp; meta tab, then run the check.</div></div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-links">
+      <a href="https://www.linkedin.com/in/ujjwalwrites/" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        Ujjwal
+      </a>
+      <a href="https://www.linkedin.com/company/magnaitic/" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        Magnaitic
+      </a>
+    </div>
+    <a class="bmc-btn" href="https://buymeacoffee.com/rawwn" target="_blank" rel="noopener">
+      <svg viewBox="0 0 884 1279" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M791.1 592.2c-4.5 73.5-43.7 131-105.3 172.5-38.5 26-81.5 39-126.2 46.2-16.5 2.7-33.3 3.7-50 5.5-3.8.2-4.5 1.7-4.5 5.2.2 47.3.2 94.5 0 141.8 0 5 1.2 6 6 6 32.8-.3 65.5.2 98.3-.3 35-.5 68-9.8 98.2-28 47-28.3 75.3-70 85.8-123.3 5-25.3 5.5-51 3-76.5-4.3-42-19.3-80-46.5-112.5-13-15.5-28.5-28-47-37.8-4-2-4.3-3.5-2.8-7.5 6-17.5 10.5-35.5 14.2-53.7 1-5.2.3-6.5-5-4-22.5 10.5-40.5 27-55.2 47.5-2.3 3-2 4.8-.3 7.5 20.3 28 32.8 59.5 37.8 94.2 2.5 17.8 2.8 35.5 0 53.3-6.3 38.3-24.8 69-58.3 89.5-23 14-48.5 20-75 21.5-24.3 1.3-48.5.3-72.8.5-4.5 0-5.8-1.2-5.7-5.7.2-56 .2-112 0-168 0-4.5 1.2-5.7 5.5-6.2 40-5 78.5-15 113-38 41.5-27.5 64-66.3 68-115.3 2-26-.3-51.5-7.5-76.5-1.3-4.5-1-6 3.8-7.3 13.5-3.5 26.8-7.8 40-12.3 5-1.8 6.2-.5 7.3 4.3 10 40.3 12 81.3 7 122.5z" fill="#1a1a1a"/><path d="M330.3 1047c-3-34.5-14.8-65.3-39.8-90-21.3-21-47-33-76-37.5-8-1.2-16.3-1.5-24.5-1.5H60.8c-4 0-5.3 1-5.3 5.2.2 36.5 0 73 .2 109.5 0 4.5-1.5 5.5-5.7 5.3-15-.3-30 0-45-.2-4.3 0-5.5 1-5.5 5.3.2 40.5.2 81 0 121.5 0 4 1.2 5.2 5.2 5 15.3-.2 30.5 0 45.8-.2 4.3 0 5.3 1.2 5.3 5.3-.2 25-.2 50 0 75 0 4-1 5.2-5.2 5.2H5.3c-4.3 0-5.3 1.2-5.3 5.3v5.8c.2 20.5-1.7 20 19.8 20h176.5c36.8 0 72-7.3 103.8-26.3 42.5-25.3 67.3-62.5 76-111 4.3-23.5 4.8-47.3 1.5-71.2-3.8-27.5-13-52.8-27.3-76.3z" fill="#1a1a1a"/></svg>
+      Buy me a coffee
+    </a>
+  </footer>
+
+</div>
+
+<script>
+const TITLE_MAX = 60, TITLE_WARN = 50;
+const META_MAX = 155, META_WARN = 140;
+
+const TRACKING_PARAMS = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','utm_id',
+  'gclid','fbclid','msclkid','mc_cid','mc_eid','igshid','ref','ref_src','si','_hsenc','_hsmi','vero_id','yclid','mkt_tok'];
+
+const CC_TLDS = ['in','uk','au','ca','de','fr','jp','cn','sg','ae','nz','ie','it','es','br','mx','ru','kr',
+  'id','ph','vn','th','my','pk','bd','ng','eg','sa','pl','nl','se','no','dk','fi','ch','be','at','pt','gr','hk','tw','co.za','co.uk','com.au'];
+
+const STOPWORDS = new Set(['a','an','the','and','or','but','of','in','on','to','for','at','is','are','was','were',
+  'be','been','it','this','that','with','as','by','from','so','if','than','then','also','its','their','they',
+  'you','your','we','our','can','will','not','more','most','which','who','what','when','where','how']);
+
+const TITLE_CASE_SMALL = new Set(['a','an','the','and','but','or','nor','for','yet','so',
+  'at','by','in','of','on','to','up','as','is','if','it']);
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ---------- status ----------
+function showStatus(msg, type){
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status show' + (type ? ' '+type : '');
+  if(type === 'ok') setTimeout(()=>{ el.classList.remove('show'); }, 4000);
+}
+function clearStatus(){ document.getElementById('status').classList.remove('show'); }
+
+// ---------- helpers ----------
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escapeAttr(s){
+  return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+function copyBtn(text){
+  return `<button class="btn secondary small" onclick="copyText(this,'${escapeAttr(text)}')">Copy</button>`;
+}
+window.copyText = function(btn, text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const old = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(()=>{ btn.textContent = old; }, 1200);
+  }).catch(()=>{ btn.textContent = 'Could not copy'; });
+};
+
+// ---------- PDF loading ----------
+if(window['pdfjsLib']){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+document.getElementById('pdfInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('pdfStatus');
+  statusEl.textContent = 'Reading PDF...';
+  try{
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let fullText = '';
+    let links = new Set();
+    for(let i = 1; i <= pdf.numPages; i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      fullText += content.items.map(it=>it.str).join(' ') + '\n\n';
+      const annots = await page.getAnnotations();
+      annots.forEach(a=>{ if(a.url) links.add(a.url); });
+    }
+    const inlineMatches = fullText.match(/https?:\/\/[^\s)\]"'<>]+/g) || [];
+    inlineMatches.forEach(u=>links.add(u.replace(/[.,;:]+$/, '')));
+    document.getElementById('draft').value = fullText.trim();
+    document.getElementById('urls').value = [...links].join('\n');
+    statusEl.textContent = `Loaded ${pdf.numPages} page${pdf.numPages===1?'':'s'}, found ${links.size} link${links.size===1?'':'s'}.`;
+    showStatus('PDF loaded. Draft and links are filled in below.', 'ok');
+  }catch(err){
+    statusEl.textContent = 'Could not read that PDF.';
+    showStatus('Could not read that PDF. Try saving it again from the source and re-uploading.', 'error');
+  }
+});
+
+// ---------- Title & meta live checker ----------
+function gaugeClass(len, warn, max){
+  if(len < warn) return 'red';   // too short
+  if(len <= max) return 'green';  // sweet spot
+  return 'red';                   // too long
+}
+function gaugeClassTitle(len){
+  if(len === 0) return 'red';
+  if(len < TITLE_WARN) return 'amber';
+  if(len <= TITLE_MAX) return 'green';
+  return 'red';
+}
+function gaugeClassMeta(len){
+  if(len === 0) return 'red';
+  if(len < META_WARN) return 'amber';
+  if(len <= META_MAX) return 'green';
+  return 'red';
+}
+
+function checkTitleCase(text){
+  const words = text.split(/\s+/).filter(Boolean);
+  const issues = [];
+  words.forEach((w, i)=>{
+    const lower = w.toLowerCase();
+    const isFirst = i === 0;
+    const isLast = i === words.length - 1;
+    if(isFirst || isLast){
+      if(w[0] !== w[0].toUpperCase()){
+        issues.push(`"${w}" should be capitalized (it opens or closes the title)`);
+      }
+    } else if(TITLE_CASE_SMALL.has(lower)){
+      if(w[0] === w[0].toUpperCase() && w !== w.toUpperCase()){
+        issues.push(`"${w}" is a short joining word, keep it lowercase in Title Case`);
+      }
+    } else {
+      if(w[0] !== w[0].toUpperCase() && !/^\d/.test(w)){
+        issues.push(`"${w}" should be capitalized in Title Case`);
+      }
+    }
+  });
+  return issues;
+}
+
+const titleInput = document.getElementById('titleInput');
+const titleCounter = document.getElementById('titleCounter');
+const titleFeedback = document.getElementById('titleFeedback');
+
+titleInput.addEventListener('input', ()=>{
+  const len = titleInput.value.length;
+  const cls = gaugeClassTitle(len);
+  titleCounter.textContent = `${len}/${TITLE_MAX}`;
+  titleCounter.className = 'live-counter ' + cls;
+
+  const pkw = document.getElementById('pkw').value.trim();
+  const feedbacks = [];
+
+  if(len > 0 && len < TITLE_WARN) feedbacks.push('<span class="verdict warn">Short</span> Under 50 characters, search engines might not find this specific enough.');
+  if(len > TITLE_MAX) feedbacks.push('<span class="verdict bad">Over limit</span> Over 60 characters, search engines will truncate this.');
+  if(len >= TITLE_WARN && len <= TITLE_MAX) feedbacks.push('<span class="verdict good">Good length</span>');
+
+  if(pkw){
+    const has = titleInput.value.toLowerCase().includes(pkw.toLowerCase());
+    if(has) feedbacks.push('<span class="kwflag yes">keyword present</span>');
+    else feedbacks.push('<span class="kwflag no">keyword missing</span>');
+
+    const idx = titleInput.value.toLowerCase().indexOf(pkw.toLowerCase());
+    if(has && idx > 30) feedbacks.push('<span class="section-hint">Keyword is far from the front. Try moving it closer to the start.</span>');
+  }
+
+  if(titleInput.value.includes('—') || titleInput.value.includes('–')) feedbacks.push('<span class="verdict warn">Em/en dash</span> Remove the dash, these don\'t play well in title tags.');
+
+  const tcIssues = checkTitleCase(titleInput.value);
+  if(tcIssues.length > 0 && tcIssues.length <= 3){
+    tcIssues.forEach(issue => feedbacks.push('<span class="section-hint">Title Case: ' + escapeHtml(issue) + '</span>'));
+  } else if(tcIssues.length > 3){
+    feedbacks.push('<span class="verdict warn">Title Case issues</span> ' + tcIssues.length + ' words may need adjusting. Check capitalization against Title Case rules.');
+  }
+
+  titleFeedback.innerHTML = feedbacks.length ? '<div class="item" style="border-left-color:var(--teal); margin-top:10px;">' + feedbacks.join('<br>') + '</div>' : '';
+});
+
+// also re-check title when keyword changes
+document.getElementById('pkw').addEventListener('input', ()=>{
+  titleInput.dispatchEvent(new Event('input'));
+  metaInput.dispatchEvent(new Event('input'));
+});
+
+const metaInput = document.getElementById('metaInput');
+const metaCounter = document.getElementById('metaCounter');
+const metaFeedback = document.getElementById('metaFeedback');
+
+metaInput.addEventListener('input', ()=>{
+  const len = metaInput.value.length;
+  const cls = gaugeClassMeta(len);
+  metaCounter.textContent = `${len}/${META_MAX}`;
+  metaCounter.className = 'live-counter ' + cls;
+
+  const pkw = document.getElementById('pkw').value.trim();
+  const feedbacks = [];
+
+  if(len > 0 && len < META_WARN) feedbacks.push('<span class="verdict warn">Short</span> Under 140 characters, you have room to add more context.');
+  if(len > META_MAX) feedbacks.push('<span class="verdict bad">Over limit</span> Over 155 characters, search engines will cut this off.');
+  if(len >= META_WARN && len <= META_MAX) feedbacks.push('<span class="verdict good">Good length</span>');
+
+  if(pkw){
+    const has = metaInput.value.toLowerCase().includes(pkw.toLowerCase());
+    if(has) feedbacks.push('<span class="kwflag yes">keyword present</span>');
+    else feedbacks.push('<span class="kwflag no">keyword missing</span>');
+  }
+
+  if(metaInput.value.includes('—') || metaInput.value.includes('–')) feedbacks.push('<span class="verdict warn">Em/en dash</span> Remove it, keep the meta description clean.');
+
+  metaFeedback.innerHTML = feedbacks.length ? '<div class="item" style="border-left-color:var(--teal); margin-top:10px;">' + feedbacks.join('<br>') + '</div>' : '';
+});
+
+// ---------- Link check ----------
+document.getElementById('extractBtn').addEventListener('click', ()=>{
+  const draft = document.getElementById('draft').value;
+  const matches = draft.match(/https?:\/\/[^\s)\]"'<>]+/g) || [];
+  const cleaned = matches.map(u => u.replace(/[.,;:]+$/, ''));
+  const unique = [...new Set(cleaned)];
+  if(!unique.length){
+    showStatus('No links found in the draft on the Title & meta tab.', 'warn');
+    return;
+  }
+  document.getElementById('urls').value = unique.join('\n');
+  showStatus(`Pulled ${unique.length} link${unique.length===1?'':'s'} from the draft.`, 'ok');
+});
+
+function cleanUrl(raw){
+  try{
+    const u = new URL(raw);
+    TRACKING_PARAMS.forEach(p => u.searchParams.delete(p));
+    let s = u.toString();
+    if(s.endsWith('?')) s = s.slice(0, -1);
+    return s;
+  }catch(e){ return raw; }
+}
+
+function heuristicRegionFlag(raw){
+  try{
+    const u = new URL(raw);
+    const host = u.hostname.toLowerCase();
+    const parts = host.split('.');
+    const tld = parts[parts.length-1];
+    const sld = parts.slice(-2).join('.');
+    if(CC_TLDS.includes(tld) || CC_TLDS.includes(sld)){
+      return { suspect: true, reason: 'Country-code domain (.' + (CC_TLDS.includes(sld) ? sld : tld) + ')' };
+    }
+    if(/^(in|uk|au|ca|de|fr|jp|sg|ae|nz)\./.test(host)){
+      return { suspect: true, reason: 'Region subdomain (e.g. in.example.com)' };
+    }
+    if(/\/(en-gb|en-in|en-au|en-ca|intl|global\/en|region\/)/i.test(u.pathname)){
+      return { suspect: true, reason: 'Region path segment in the URL' };
+    }
+    // check for non-usd currency or non-us locale params
+    const params = u.searchParams;
+    const localeHints = ['locale','lang','country','region','gl'];
+    for(const p of localeHints){
+      const v = (params.get(p) || '').toLowerCase();
+      if(v && v !== 'us' && v !== 'en' && v !== 'en-us'){
+        return { suspect: true, reason: `URL parameter "${p}=${v}" suggests a non-US locale` };
+      }
+    }
+    return { suspect: false, reason: '' };
+  }catch(e){ return { suspect: null, reason: 'Not a valid URL' }; }
+}
+
+function getUrlList(){
+  return document.getElementById('urls').value.split('\n').map(s=>s.trim()).filter(Boolean);
+}
+
+document.getElementById('testAllBtn').addEventListener('click', ()=>{
+  const urls = getUrlList();
+  if(!urls.length){
+    showStatus('Add at least one URL, or pull them from the draft.', 'warn');
+    return;
+  }
+  clearStatus();
+  const out = document.getElementById('linksOut');
+  out.innerHTML = '';
+
+  let flagged = 0;
+  urls.forEach(raw=>{
+    const cleaned = cleanUrl(raw);
+    const heur = heuristicRegionFlag(cleaned);
+    const showCleaned = cleaned !== raw;
+    if(heur.suspect) flagged++;
+
+    let stamp, note;
+    if(heur.suspect === null){
+      stamp = `<span class="stamp unknown">Invalid</span>`;
+      note = `<div class="link-note">${escapeHtml(heur.reason)}</div>`;
+    }else if(heur.suspect){
+      stamp = `<span class="stamp nonus">Non-US flag</span>`;
+      note = `<div class="link-note">${escapeHtml(heur.reason)}. Open it and check if there's a US or global version.</div>`;
+    }else{
+      stamp = `<span class="stamp us">Looks OK</span>`;
+      note = '';
+    }
+
+    const row = document.createElement('div');
+    row.className = 'link-row';
+    row.innerHTML = `
+      <div class="link-top">
+        ${stamp}
+        ${showCleaned ? `<div class="urltext original">${escapeHtml(raw)}</div>` : ''}
+      </div>
+      <div class="urltext cleaned" style="margin-top:${showCleaned ? '6' : '0'}px;">${escapeHtml(cleaned)}</div>
+      ${note}
+      <div class="link-actions">
+        ${copyBtn(cleaned)}
+        <a class="btn secondary small" href="${escapeHtml(cleaned)}" target="_blank" rel="noopener" style="text-decoration:none;">Open</a>
+      </div>
+    `;
+    out.appendChild(row);
+  });
+
+  const total = urls.length;
+  const cleanCount = urls.filter(u => cleanUrl(u) !== u).length;
+  let msg = `Checked ${total} link${total===1?'':'s'}.`;
+  if(cleanCount) msg += ` Cleaned tracking params from ${cleanCount}.`;
+  if(flagged) msg += ` ${flagged} flagged as possibly non-US.`;
+  showStatus(msg, flagged ? 'warn' : 'ok');
+});
+
+// ---------- Content check ----------
+function splitParagraphs(text){
+  return text.split(/\n\s*\n/).map(p=>p.replace(/\s+/g,' ').trim()).filter(p=>p.length > 0);
+}
+function splitSentences(text){
+  return text.replace(/\s+/g,' ').split(/(?<=[.!?])\s+/).map(s=>s.trim()).filter(s=>s.length > 0);
+}
+function wordTokens(text){
+  return (text.toLowerCase().match(/[a-z0-9']+/g) || []);
+}
+function contentWords(text){
+  return wordTokens(text).filter(w=>!STOPWORDS.has(w) && w.length > 2);
+}
+function jaccard(aSet, bSet){
+  if(aSet.size === 0 || bSet.size === 0) return 0;
+  let overlap = 0;
+  aSet.forEach(w=>{ if(bSet.has(w)) overlap++; });
+  return overlap / new Set([...aSet, ...bSet]).size;
+}
+function detectHeadings(draft){
+  return draft.match(/^#{1,4}\s+.+$/gm) || [];
+}
+function countPhrase(text, phrase){
+  if(!phrase) return 0;
+  const esc = phrase.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return (text.match(new RegExp(esc, 'gi')) || []).length;
+}
+function verdictBadge(label, cls){
+  return `<span class="verdict ${cls}">${label}</span>`;
+}
+
+document.getElementById('runOverviewBtn').addEventListener('click', runOverview);
+
+function runOverview(){
+  const draft = document.getElementById('draft').value.trim();
+  const pkw = document.getElementById('pkw').value.trim();
+  const skwRaw = document.getElementById('skw').value.trim();
+  const secondary = skwRaw ? skwRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
+
+  if(!draft){
+    showStatus('Add a draft on the Title & meta tab first.', 'warn');
+    return;
+  }
+
+  const words = wordTokens(draft);
+  const totalWords = words.length;
+  const readTime = Math.max(1, Math.round(totalWords / 200));
+  const paragraphs = splitParagraphs(draft);
+  const sentences = splitSentences(draft);
+  const headings = detectHeadings(draft);
+  const first100 = draft.split(/\s+/).slice(0, 100).join(' ').toLowerCase();
+
+  let html = '';
+
+  html += `<div class="stat-grid">
+    <div class="stat-card"><div class="stat-num">${totalWords}</div><div class="stat-lbl">Words</div></div>
+    <div class="stat-card"><div class="stat-num">${readTime}</div><div class="stat-lbl">Min read</div></div>
+    <div class="stat-card"><div class="stat-num">${paragraphs.length}</div><div class="stat-lbl">Paragraphs</div></div>
+    <div class="stat-card"><div class="stat-num">${headings.length}</div><div class="stat-lbl">Headings found</div></div>
+  </div>`;
+
+  if(headings.length === 0){
+    html += `<div class="status show warn" style="position:static; margin-bottom:20px;">No # style headings found. If this draft came from a doc or PDF, headings often get flattened into plain text. Double-check the real heading tags before publishing.</div>`;
+  }
+
+  html += `<h2 class="section">Keyword use</h2>`;
+  if(pkw){
+    html += renderKeywordRow(pkw, true, draft, first100, headings, totalWords);
+  }else{
+    html += `<div class="empty">Add a primary keyword on the Title &amp; meta tab to see how well it's used.</div>`;
+  }
+  secondary.forEach(k=>{
+    html += renderKeywordRow(k, false, draft, first100, headings, totalWords);
+  });
+
+  html += `<h2 class="section">Repetition <span class="section-hint">(paragraphs that cover similar ground)</span></h2>`;
+  const dupes = findRedundantPairs(paragraphs);
+  if(dupes.length === 0){
+    html += `<div class="empty">No paragraphs stood out as repeating each other. That's a good sign, not a guarantee, so a quick skim is still worth it.</div>`;
+  }else{
+    dupes.slice(0, 8).forEach(pair=>{
+      html += `<div class="dupe-pair">
+        <span class="sim">${Math.round(pair.sim*100)}% overlap in wording</span>
+        <div class="dupe-snip">${escapeHtml(truncate(pair.a, 220))}</div>
+        <div class="dupe-snip">${escapeHtml(truncate(pair.b, 220))}</div>
+      </div>`;
+    });
+    if(dupes.length > 8){
+      html += `<div class="help">${dupes.length - 8} more pair(s) also flagged, worth a closer read of the full draft.</div>`;
+    }
+  }
+
+  html += `<h2 class="section">Readability notes</h2>`;
+  const longSentences = sentences.filter(s=>wordTokens(s).length > 32);
+  const passiveHits = sentences.filter(s=>/\b(is|are|was|were|been|being|be)\b\s+\w+ed\b/i.test(s));
+  html += `<div class="item">
+    <div class="item-meta" style="justify-content:space-between;">
+      <span>Long sentences (over 32 words)</span>
+      ${verdictBadge(longSentences.length === 0 ? 'None' : longSentences.length + ' found', longSentences.length === 0 ? 'good' : (longSentences.length > 5 ? 'bad' : 'warn'))}
+    </div>
+  </div>
+  <div class="item">
+    <div class="item-meta" style="justify-content:space-between;">
+      <span>Possible passive voice</span>
+      ${verdictBadge(passiveHits.length === 0 ? 'None flagged' : passiveHits.length + ' sentences', passiveHits.length === 0 ? 'good' : (passiveHits.length > 8 ? 'bad' : 'warn'))}
+    </div>
+  </div>`;
+
+  document.getElementById('overviewOut').innerHTML = html;
+  showStatus('Content check complete.', 'ok');
+}
+
+function renderKeywordRow(term, isPrimary, draft, first100, headings, totalWords){
+  const count = countPhrase(draft, term);
+  const termWords = Math.max(1, wordTokens(term).length);
+  const density = totalWords ? (count * termWords / totalWords) * 100 : 0;
+  const inFirst100 = first100.includes(term.toLowerCase());
+  const inHeading = headings.some(h => h.toLowerCase().includes(term.toLowerCase()));
+
+  let verdictLabel, verdictCls;
+  if(count === 0){ verdictLabel = 'Not used'; verdictCls = 'bad'; }
+  else if(density > 3){ verdictLabel = 'Overused'; verdictCls = 'bad'; }
+  else if(density < 0.2){ verdictLabel = 'Barely used'; verdictCls = 'warn'; }
+  else{ verdictLabel = 'Looks reasonable'; verdictCls = 'good'; }
+
+  return `<div class="kw-row">
+    <div class="kw-head">
+      <span class="kw-term">${escapeHtml(term)}</span>
+      ${isPrimary ? '<span class="section-hint">primary</span>' : '<span class="section-hint">supporting</span>'}
+      ${verdictBadge(verdictLabel, verdictCls)}
+    </div>
+    <div class="kw-details">
+      used ${count} time${count===1?'':'s'} &middot; ${density.toFixed(2)}% density &middot;
+      ${inFirst100 ? 'in the opening' : 'not in the opening 100 words'} &middot;
+      ${headings.length ? (inHeading ? 'in a heading' : 'not in any heading') : 'no headings to check'}
+    </div>
+  </div>`;
+}
+
+function truncate(s, n){
+  return s.length > n ? s.slice(0, n).trim() + '...' : s;
+}
+
+function findRedundantPairs(paragraphs){
+  const sets = paragraphs.map(p => new Set(contentWords(p)));
+  const pairs = [];
+  const limit = Math.min(paragraphs.length, 120);
+  for(let i = 0; i < limit; i++){
+    if(sets[i].size < 6) continue;
+    for(let j = i+1; j < limit; j++){
+      if(sets[j].size < 6) continue;
+      const sim = jaccard(sets[i], sets[j]);
+      if(sim >= 0.45) pairs.push({ a: paragraphs[i], b: paragraphs[j], sim });
+    }
+  }
+  return pairs.sort((a,b)=>b.sim - a.sim);
+}
+</script>
+</body>
+</html>
