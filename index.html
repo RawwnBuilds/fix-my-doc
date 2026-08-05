@@ -702,6 +702,7 @@ document.getElementById('pdfInput').addEventListener('change', async (e)=>{
     document.getElementById('urls').value = [...links].join('\n');
     statusEl.textContent = `Loaded ${pdf.numPages} page${pdf.numPages===1?'':'s'}, found ${links.size} link${links.size===1?'':'s'}.`;
     showStatus('PDF loaded. Draft and links are filled in below.', 'ok');
+    tryExtractTitleMeta(fullText);
   }catch(err){
     statusEl.textContent = 'Could not read that PDF.';
     showStatus('Could not read that PDF. Try saving it again from the source and re-uploading.', 'error');
@@ -709,6 +710,60 @@ document.getElementById('pdfInput').addEventListener('change', async (e)=>{
 });
 
 // ---------- Title & meta live checker ----------
+
+// Auto-extract title and meta from draft if patterns like "Title tag:" or "Meta description:" exist
+function tryExtractTitleMeta(text){
+  const titlePatterns = [
+    /title\s*tag\s*[:]\s*(.+?)(?:\n|meta\s*desc|$)/i,
+    /^title\s*[:]\s*(.+?)(?:\n|meta|$)/im,
+    /seo\s*title\s*[:]\s*(.+?)(?:\n|meta|$)/i,
+    /h1\s*[:]\s*(.+?)(?:\n|$)/i,
+  ];
+  const metaPatterns = [
+    /meta\s*desc(?:ription)?\s*[:]\s*(.+?)(?:\n\n|\n-{3,}|$)/is,
+    /description\s*[:]\s*(.+?)(?:\n\n|\n-{3,}|$)/is,
+  ];
+
+  let foundTitle = '';
+  let foundMeta = '';
+
+  for(const re of titlePatterns){
+    const m = text.match(re);
+    if(m && m[1].trim().length > 5){
+      foundTitle = m[1].trim();
+      break;
+    }
+  }
+  for(const re of metaPatterns){
+    const m = text.match(re);
+    if(m && m[1].trim().length > 10){
+      foundMeta = m[1].trim();
+      break;
+    }
+  }
+
+  if(foundTitle){
+    document.getElementById('titleInput').value = foundTitle;
+    document.getElementById('titleInput').dispatchEvent(new Event('input'));
+  }
+  if(foundMeta){
+    document.getElementById('metaInput').value = foundMeta;
+    document.getElementById('metaInput').dispatchEvent(new Event('input'));
+  }
+
+  if(foundTitle || foundMeta){
+    showStatus('Found ' + (foundTitle && foundMeta ? 'title and meta' : foundTitle ? 'a title' : 'a meta description') + ' in the draft and filled them in below.', 'ok');
+  }
+}
+
+// Listen for paste/change on draft textarea
+document.getElementById('draft').addEventListener('input', function(){
+  // Only auto-extract if the title field is still empty (don't overwrite manual input)
+  if(!document.getElementById('titleInput').value && !document.getElementById('metaInput').value){
+    tryExtractTitleMeta(this.value);
+  }
+});
+
 function gaugeClass(len, warn, max){
   if(len < warn) return 'red';   // too short
   if(len <= max) return 'green';  // sweet spot
@@ -1034,13 +1089,32 @@ function runOverview(){
       <span>Long sentences (over 32 words)</span>
       ${verdictBadge(longSentences.length === 0 ? 'None' : longSentences.length + ' found', longSentences.length === 0 ? 'good' : (longSentences.length > 5 ? 'bad' : 'warn'))}
     </div>
-  </div>
-  <div class="item">
+  </div>`;
+  if(longSentences.length > 0){
+    longSentences.slice(0, 10).forEach(s=>{
+      const wc = wordTokens(s).length;
+      html += `<div class="dupe-pair" style="border-left-color:var(--red);">
+        <span class="sim">${wc} words</span>
+        <div class="dupe-snip">${escapeHtml(truncate(s, 300))}</div>
+      </div>`;
+    });
+    if(longSentences.length > 10) html += `<div class="help">...and ${longSentences.length - 10} more.</div>`;
+  }
+
+  html += `<div class="item">
     <div class="item-meta" style="justify-content:space-between;">
       <span>Possible passive voice</span>
       ${verdictBadge(passiveHits.length === 0 ? 'None flagged' : passiveHits.length + ' sentences', passiveHits.length === 0 ? 'good' : (passiveHits.length > 8 ? 'bad' : 'warn'))}
     </div>
   </div>`;
+  if(passiveHits.length > 0){
+    passiveHits.slice(0, 10).forEach(s=>{
+      html += `<div class="dupe-pair" style="border-left-color:var(--amber);">
+        <div class="dupe-snip">${escapeHtml(truncate(s, 300))}</div>
+      </div>`;
+    });
+    if(passiveHits.length > 10) html += `<div class="help">...and ${passiveHits.length - 10} more.</div>`;
+  }
 
   document.getElementById('overviewOut').innerHTML = html;
   showStatus('Content check complete.', 'ok');
