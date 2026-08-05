@@ -552,8 +552,20 @@
       <textarea id="draft" placeholder="Paste the article draft here."></textarea>
     </div>
 
-    <h2 class="section">Title tag <span class="section-hint">(Title Case, target 50-60 characters)</span></h2>
-    <p class="help">Type your title below. The counter turns green when you're in the sweet spot, red when you're over.</p>
+    <div class="row-actions">
+      <button class="btn" id="genBtn">Generate title &amp; meta suggestions</button>
+    </div>
+
+    <div id="suggestionsWrap" style="display:none;">
+      <h2 class="section">Suggested titles <span class="section-hint">(pick one or use as inspiration)</span></h2>
+      <div id="titlesOut"></div>
+
+      <h2 class="section">Suggested meta descriptions</h2>
+      <div id="metasOut"></div>
+    </div>
+
+    <h2 class="section">Title tag checker <span class="section-hint">(Title Case, target 50-60 characters)</span></h2>
+    <p class="help">Type or paste your title below. Click a suggestion above to fill it in automatically.</p>
     <div class="field live-wrap">
       <input type="text" id="titleInput" placeholder="e.g. Best Claude Alternatives for Content Writers in 2026">
       <span class="live-counter" id="titleCounter">0/60</span>
@@ -636,6 +648,129 @@ const STOPWORDS = new Set(['a','an','the','and','or','but','of','in','on','to','
 
 const TITLE_CASE_SMALL = new Set(['a','an','the','and','but','or','nor','for','yet','so',
   'at','by','in','of','on','to','up','as','is','if','it']);
+
+// ---------- Claude API (works free inside the artifact sandbox, fails gracefully elsewhere) ----------
+async function callClaude(prompt){
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1000,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  if(!res.ok) throw new Error("API error " + res.status);
+  return res.json();
+}
+
+function extractText(data){
+  if(!data || !data.content) return "";
+  return data.content.filter(b=>b.type === "text").map(b=>b.text).join("\n");
+}
+
+function parseJsonLoose(text){
+  const clean = text.replace(/```json/gi,'').replace(/```/g,'').trim();
+  const start = clean.indexOf('{');
+  const end = clean.lastIndexOf('}');
+  return JSON.parse((start !== -1 && end !== -1) ? clean.slice(start, end+1) : clean);
+}
+
+// ---------- Generate title & meta ----------
+document.getElementById('genBtn').addEventListener('click', async ()=>{
+  const draft = document.getElementById('draft').value.trim();
+  const pkw = document.getElementById('pkw').value.trim();
+  const btn = document.getElementById('genBtn');
+
+  if(!draft || !pkw){
+    showStatus('Add a primary keyword and a draft first.', 'warn');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+  clearStatus();
+
+  const prompt = `You are an SEO editor for a tech content site. Primary keyword: "${pkw}".
+
+Article draft (context, use only what you need):
+---
+${draft.slice(0, 6000)}
+---
+
+Write 4 SEO title tag options and 4 meta description options.
+
+Rules:
+- Titles: 50 to 60 characters, written in Title Case (capitalize major words, lowercase short joining words like a, an, the, and, of, in, on, to, for, unless they open or close the title), keyword placed near the front, no clickbait, no colon-as-crutch, no em dashes.
+- Meta descriptions: 140 to 155 characters, active voice, sentence case, the keyword worked in naturally, no em dashes, ending on a reason to click rather than a hard command.
+
+Return ONLY valid JSON, no markdown fences, no preamble, in exactly this shape:
+{"titles":["...","...","...","..."],"metas":["...","...","...","..."]}`;
+
+  try{
+    const data = await callClaude(prompt);
+    const parsed = parseJsonLoose(extractText(data));
+    renderSuggestions(parsed.titles || [], parsed.metas || [], pkw);
+    document.getElementById('suggestionsWrap').style.display = 'block';
+    showStatus('Suggestions ready. Click any to fill it into the checker below.', 'ok');
+  }catch(e){
+    showStatus('Suggestions are only available inside the Claude app. Use the manual checker below to verify your own title and meta.', 'warn');
+    document.getElementById('suggestionsWrap').style.display = 'none';
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Generate title & meta suggestions';
+  }
+});
+
+function renderSuggestions(titles, metas, pkw){
+  const titlesOut = document.getElementById('titlesOut');
+  const metasOut = document.getElementById('metasOut');
+
+  titlesOut.innerHTML = titles.map(t=>{
+    const len = t.length;
+    const cls = len >= TITLE_WARN && len <= TITLE_MAX ? 'green' : (len > TITLE_MAX ? 'red' : 'amber');
+    const pct = Math.min((len / (TITLE_MAX * 1.15)) * 100, 100);
+    const has = pkw && t.toLowerCase().includes(pkw.toLowerCase());
+    return `<div class="item" style="cursor:pointer;" onclick="fillTitle(this)" data-value="${escapeHtml(t)}">
+      <div class="item-text">${escapeHtml(t)}</div>
+      <div class="item-meta">
+        <div class="gauge"><div class="gauge-fill ${cls}" style="width:${pct}%"></div></div>
+        <span class="count">${len}/${TITLE_MAX}</span>
+        <span class="kwflag ${has ? 'yes' : 'no'}">${has ? 'keyword present' : 'keyword missing'}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  metasOut.innerHTML = metas.map(m=>{
+    const len = m.length;
+    const cls = len >= META_WARN && len <= META_MAX ? 'green' : (len > META_MAX ? 'red' : 'amber');
+    const pct = Math.min((len / (META_MAX * 1.1)) * 100, 100);
+    const has = pkw && m.toLowerCase().includes(pkw.toLowerCase());
+    return `<div class="item" style="cursor:pointer;" onclick="fillMeta(this)" data-value="${escapeHtml(m)}">
+      <div class="item-text">${escapeHtml(m)}</div>
+      <div class="item-meta">
+        <div class="gauge"><div class="gauge-fill ${cls}" style="width:${pct}%"></div></div>
+        <span class="count">${len}/${META_MAX}</span>
+        <span class="kwflag ${has ? 'yes' : 'no'}">${has ? 'keyword present' : 'keyword missing'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.fillTitle = function(el){
+  const v = el.getAttribute('data-value');
+  document.getElementById('titleInput').value = v;
+  document.getElementById('titleInput').dispatchEvent(new Event('input'));
+  el.style.outline = '2px solid var(--green)';
+  setTimeout(()=>{ el.style.outline = ''; }, 800);
+};
+window.fillMeta = function(el){
+  const v = el.getAttribute('data-value');
+  document.getElementById('metaInput').value = v;
+  document.getElementById('metaInput').dispatchEvent(new Event('input'));
+  el.style.outline = '2px solid var(--green)';
+  setTimeout(()=>{ el.style.outline = ''; }, 800);
+};
 
 // ---------- tabs ----------
 document.querySelectorAll('.tab-btn').forEach(btn=>{
