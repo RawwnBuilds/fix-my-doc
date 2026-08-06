@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Article Basics | Magnaitic</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4220904370923988" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -612,6 +613,18 @@
     <div id="overviewOut"><div class="empty">Nothing checked yet. Add a draft on the Title &amp; meta tab, then run the check.</div></div>
   </section>
 
+  <!-- AD UNIT -->
+  <div style="margin-top:36px; padding-top:18px; border-top:1px dashed var(--line); text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); margin-bottom:8px;">Sponsored</div>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-4220904370923988"
+         data-ad-slot="auto"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+
   <!-- FOOTER -->
   <footer class="site-footer">
     <div class="footer-links">
@@ -888,7 +901,6 @@ document.getElementById('pdfInput').addEventListener('change', async (e)=>{
     document.getElementById('urls').value = [...links].join('\n');
     statusEl.textContent = `Loaded ${pdf.numPages} page${pdf.numPages===1?'':'s'}, found ${links.size} link${links.size===1?'':'s'}.`;
     showStatus('PDF loaded. Draft and links are filled in below.', 'ok');
-    tryExtractTitleMeta(fullText);
   }catch(err){
     statusEl.textContent = 'Could not read that PDF.';
     showStatus('Could not read that PDF. Try saving it again from the source and re-uploading.', 'error');
@@ -896,59 +908,6 @@ document.getElementById('pdfInput').addEventListener('change', async (e)=>{
 });
 
 // ---------- Title & meta live checker ----------
-
-// Auto-extract title and meta from draft if patterns like "Title tag:" or "Meta description:" exist
-function tryExtractTitleMeta(text){
-  const titlePatterns = [
-    /title\s*tag\s*[:]\s*(.+?)(?:\n|meta\s*desc|$)/i,
-    /^title\s*[:]\s*(.+?)(?:\n|meta|$)/im,
-    /seo\s*title\s*[:]\s*(.+?)(?:\n|meta|$)/i,
-    /h1\s*[:]\s*(.+?)(?:\n|$)/i,
-  ];
-  const metaPatterns = [
-    /meta\s*desc(?:ription)?\s*[:]\s*(.+?)(?:\n\n|\n-{3,}|$)/is,
-    /description\s*[:]\s*(.+?)(?:\n\n|\n-{3,}|$)/is,
-  ];
-
-  let foundTitle = '';
-  let foundMeta = '';
-
-  for(const re of titlePatterns){
-    const m = text.match(re);
-    if(m && m[1].trim().length > 5){
-      foundTitle = m[1].trim();
-      break;
-    }
-  }
-  for(const re of metaPatterns){
-    const m = text.match(re);
-    if(m && m[1].trim().length > 10){
-      foundMeta = m[1].trim();
-      break;
-    }
-  }
-
-  if(foundTitle){
-    document.getElementById('titleInput').value = foundTitle;
-    document.getElementById('titleInput').dispatchEvent(new Event('input'));
-  }
-  if(foundMeta){
-    document.getElementById('metaInput').value = foundMeta;
-    document.getElementById('metaInput').dispatchEvent(new Event('input'));
-  }
-
-  if(foundTitle || foundMeta){
-    showStatus('Found ' + (foundTitle && foundMeta ? 'title and meta' : foundTitle ? 'a title' : 'a meta description') + ' in the draft and filled them in below.', 'ok');
-  }
-}
-
-// Listen for paste/change on draft textarea
-document.getElementById('draft').addEventListener('input', function(){
-  // Only auto-extract if the title field is still empty (don't overwrite manual input)
-  if(!document.getElementById('titleInput').value && !document.getElementById('metaInput').value){
-    tryExtractTitleMeta(this.value);
-  }
-});
 
 function gaugeClass(len, warn, max){
   if(len < warn) return 'red';   // too short
@@ -997,37 +956,77 @@ const titleCounter = document.getElementById('titleCounter');
 const titleFeedback = document.getElementById('titleFeedback');
 
 titleInput.addEventListener('input', ()=>{
-  const len = titleInput.value.length;
+  const val = titleInput.value;
+  const len = val.length;
   const cls = gaugeClassTitle(len);
   titleCounter.textContent = `${len}/${TITLE_MAX}`;
   titleCounter.className = 'live-counter ' + cls;
+  if(!len){ titleFeedback.innerHTML = ''; return; }
 
   const pkw = document.getElementById('pkw').value.trim();
+  const lower = val.toLowerCase();
   const feedbacks = [];
+  let score = 0;
+  const maxScore = pkw ? 10 : 7;
 
-  if(len > 0 && len < TITLE_WARN) feedbacks.push('<span class="verdict warn">Short</span> Under 50 characters, search engines might not find this specific enough.');
-  if(len > TITLE_MAX) feedbacks.push('<span class="verdict bad">Over limit</span> Over 60 characters, search engines will truncate this.');
-  if(len >= TITLE_WARN && len <= TITLE_MAX) feedbacks.push('<span class="verdict good">Good length</span>');
+  // 1. Length
+  if(len >= TITLE_WARN && len <= TITLE_MAX){ feedbacks.push('<span class="verdict good">Good length</span>'); score += 2; }
+  else if(len < TITLE_WARN) feedbacks.push('<span class="verdict warn">Short</span> Under 50 characters. Search engines might not find this specific enough.');
+  else feedbacks.push('<span class="verdict bad">Over limit</span> Over 60 characters. Search engines will truncate this.');
 
+  // 2. Keyword
   if(pkw){
-    const has = titleInput.value.toLowerCase().includes(pkw.toLowerCase());
-    if(has) feedbacks.push('<span class="kwflag yes">keyword present</span>');
-    else feedbacks.push('<span class="kwflag no">keyword missing</span>');
+    const pkwLower = pkw.toLowerCase();
+    const has = lower.includes(pkwLower);
+    if(has){ feedbacks.push('<span class="kwflag yes">keyword present</span>'); score += 1; }
+    else feedbacks.push('<span class="kwflag no">keyword missing</span> Adding it helps search engines match this to the right queries.');
 
-    const idx = titleInput.value.toLowerCase().indexOf(pkw.toLowerCase());
-    if(has && idx > 30) feedbacks.push('<span class="section-hint">Keyword is far from the front. Try moving it closer to the start.</span>');
+    const idx = lower.indexOf(pkwLower);
+    if(has && idx <= 20){ feedbacks.push('<span class="section-hint">Keyword is near the front. That\'s ideal for CTR.</span>'); score += 2; }
+    else if(has && idx <= 35){ score += 1; }
+    else if(has) feedbacks.push('<span class="section-hint">Keyword sits far back. Moving it closer to the start usually improves click-through.</span>');
   }
 
-  if(titleInput.value.includes('—') || titleInput.value.includes('–')) feedbacks.push('<span class="verdict warn">Em/en dash</span> Remove the dash, these don\'t play well in title tags.');
+  // 3. Year
+  const hasYear = /20\d{2}/.test(val);
+  if(hasYear){ feedbacks.push('<span class="section-hint">Has a year. Good for freshness signals.</span>'); score += 1; }
 
-  const tcIssues = checkTitleCase(titleInput.value);
+  // 4. Number or list signal
+  if(/^\d/.test(val.trim())){ feedbacks.push('<span class="section-hint">Starts with a number. List-style titles tend to get higher CTR.</span>'); score += 1; }
+
+  // 5. Power / emotional words
+  const powerWords = ['best','top','proven','ultimate','complete','essential','free','new','easy','fast','simple','powerful','honest','real','tested','compared','reviewed','guide','vs'];
+  const foundPower = powerWords.filter(w => lower.includes(w));
+  if(foundPower.length > 0){ score += 1; }
+  else{ feedbacks.push('<span class="section-hint">No strong hook words. Consider adding one like "best," "compared," "guide," or "reviewed" to pull clicks.</span>'); }
+
+  // 6. Pipes, colons, dashes
+  if(val.includes('|')) feedbacks.push('<span class="section-hint">Pipe separators work, but keep the important part before the pipe since that\'s what gets shown first.</span>');
+  if((val.match(/:/g) || []).length > 1) feedbacks.push('<span class="verdict warn">Multiple colons</span> More than one colon makes the title hard to scan.');
+  if(val.includes('—') || val.includes('–')) feedbacks.push('<span class="verdict warn">Em/en dash</span> Remove it. These don\'t play well in title tags.');
+
+  // 7. Title Case
+  const tcIssues = checkTitleCase(val);
   if(tcIssues.length > 0 && tcIssues.length <= 3){
     tcIssues.forEach(issue => feedbacks.push('<span class="section-hint">Title Case: ' + escapeHtml(issue) + '</span>'));
   } else if(tcIssues.length > 3){
-    feedbacks.push('<span class="verdict warn">Title Case issues</span> ' + tcIssues.length + ' words may need adjusting. Check capitalization against Title Case rules.');
+    feedbacks.push('<span class="verdict warn">Title Case issues</span> ' + tcIssues.length + ' words may need adjusting.');
   }
+  if(tcIssues.length === 0) score += 1;
 
-  titleFeedback.innerHTML = feedbacks.length ? '<div class="item" style="border-left-color:var(--teal); margin-top:10px;">' + feedbacks.join('<br>') + '</div>' : '';
+  // 8. Repetition
+  const words = lower.match(/[a-z]+/g) || [];
+  const wordCount = {};
+  words.forEach(w => { if(w.length > 3) wordCount[w] = (wordCount[w]||0) + 1; });
+  const repeated = Object.entries(wordCount).filter(([w,c]) => c > 2 && !(pkw && pkw.toLowerCase().split(/\s+/).includes(w)));
+  if(repeated.length) feedbacks.push('<span class="verdict warn">Repetition</span> "' + escapeHtml(repeated[0][0]) + '" appears ' + repeated[0][1] + ' times.');
+
+  // Score badge
+  const pct = Math.round((score / maxScore) * 100);
+  const scoreCls = pct >= 70 ? 'good' : (pct >= 40 ? 'warn' : 'bad');
+  feedbacks.unshift(`<span class="verdict ${scoreCls}">${pct}% SEO score</span>`);
+
+  titleFeedback.innerHTML = '<div class="item" style="border-left-color:var(--teal); margin-top:10px;">' + feedbacks.join('<br>') + '</div>';
 });
 
 // also re-check title when keyword changes
@@ -1041,27 +1040,68 @@ const metaCounter = document.getElementById('metaCounter');
 const metaFeedback = document.getElementById('metaFeedback');
 
 metaInput.addEventListener('input', ()=>{
-  const len = metaInput.value.length;
+  const val = metaInput.value;
+  const len = val.length;
   const cls = gaugeClassMeta(len);
   metaCounter.textContent = `${len}/${META_MAX}`;
   metaCounter.className = 'live-counter ' + cls;
+  if(!len){ metaFeedback.innerHTML = ''; return; }
 
   const pkw = document.getElementById('pkw').value.trim();
+  const lower = val.toLowerCase();
   const feedbacks = [];
+  let score = 0;
+  const maxScore = pkw ? 8 : 6;
 
-  if(len > 0 && len < META_WARN) feedbacks.push('<span class="verdict warn">Short</span> Under 140 characters, you have room to add more context.');
-  if(len > META_MAX) feedbacks.push('<span class="verdict bad">Over limit</span> Over 155 characters, search engines will cut this off.');
-  if(len >= META_WARN && len <= META_MAX) feedbacks.push('<span class="verdict good">Good length</span>');
+  // 1. Length
+  if(len >= META_WARN && len <= META_MAX){ feedbacks.push('<span class="verdict good">Good length</span>'); score += 2; }
+  else if(len < META_WARN) feedbacks.push('<span class="verdict warn">Short</span> Under 140 characters. You have room to add more context.');
+  else feedbacks.push('<span class="verdict bad">Over limit</span> Over 155 characters. Search engines will cut this off.');
 
+  // 2. Keyword
   if(pkw){
-    const has = metaInput.value.toLowerCase().includes(pkw.toLowerCase());
-    if(has) feedbacks.push('<span class="kwflag yes">keyword present</span>');
-    else feedbacks.push('<span class="kwflag no">keyword missing</span>');
+    const has = lower.includes(pkw.toLowerCase());
+    if(has){ feedbacks.push('<span class="kwflag yes">keyword present</span>'); score += 2; }
+    else feedbacks.push('<span class="kwflag no">keyword missing</span> Search engines bold the keyword in results, which lifts click-through.');
   }
 
-  if(metaInput.value.includes('—') || metaInput.value.includes('–')) feedbacks.push('<span class="verdict warn">Em/en dash</span> Remove it, keep the meta description clean.');
+  // 3. Starts with capital, ends with punctuation
+  if(/^[A-Z]/.test(val)) score += 1;
+  else feedbacks.push('<span class="section-hint">Start with a capital letter for a cleaner look in search results.</span>');
 
-  metaFeedback.innerHTML = feedbacks.length ? '<div class="item" style="border-left-color:var(--teal); margin-top:10px;">' + feedbacks.join('<br>') + '</div>' : '';
+  if(/[.!?]$/.test(val.trim())){ score += 1; }
+  else feedbacks.push('<span class="section-hint">Ending with a period or question mark looks more intentional in the SERP.</span>');
+
+  // 4. Call to action or value signal
+  const ctaWords = ['learn','discover','find','see','compare','get','try','explore','check','read','updated','includes','covers','breaks down','here\'s','ranked','reviewed','tested'];
+  const hasCta = ctaWords.some(w => lower.includes(w));
+  if(hasCta){ feedbacks.push('<span class="section-hint">Good: has an action or value signal that gives a reason to click.</span>'); score += 1; }
+  else feedbacks.push('<span class="section-hint">No clear reason to click. Try adding a value hook like "see how," "compared," "updated for," or "here\'s what."</span>');
+
+  // 5. Passive / weak opening
+  if(/^(this|it|the|we|our|in this|here)\b/i.test(val.trim())) feedbacks.push('<span class="section-hint">The opening is generic. Leading with the topic or a benefit tends to perform better.</span>');
+
+  // 6. Em dash
+  if(val.includes('—') || val.includes('–')) feedbacks.push('<span class="verdict warn">Em/en dash</span> Remove it. Keep the meta description clean.');
+
+  // 7. Uniqueness from title
+  const titleVal = document.getElementById('titleInput').value.toLowerCase();
+  if(titleVal.length > 10 && lower.length > 10){
+    const titleWords = new Set((titleVal.match(/[a-z]{4,}/g) || []));
+    const metaWords = (lower.match(/[a-z]{4,}/g) || []);
+    const overlap = metaWords.filter(w => titleWords.has(w)).length;
+    const overlapRatio = metaWords.length ? overlap / metaWords.length : 0;
+    if(overlapRatio > 0.6){
+      feedbacks.push('<span class="section-hint">Very similar to the title. The meta description should add new information, not repeat it.</span>');
+    } else { score += 1; }
+  }
+
+  // Score badge
+  const pct = Math.round((score / maxScore) * 100);
+  const scoreCls = pct >= 70 ? 'good' : (pct >= 40 ? 'warn' : 'bad');
+  feedbacks.unshift(`<span class="verdict ${scoreCls}">${pct}% SEO score</span>`);
+
+  metaFeedback.innerHTML = '<div class="item" style="border-left-color:var(--teal); margin-top:10px;">' + feedbacks.join('<br>') + '</div>';
 });
 
 // ---------- Link check ----------
@@ -1081,9 +1121,14 @@ document.getElementById('extractBtn').addEventListener('click', ()=>{
 function cleanUrl(raw){
   try{
     const u = new URL(raw);
+    // strip tracking params
     TRACKING_PARAMS.forEach(p => u.searchParams.delete(p));
+    // strip text fragments (#:~:text=...)
+    if(u.hash.includes(':~:')) u.hash = '';
+    // strip empty search
     let s = u.toString();
     if(s.endsWith('?')) s = s.slice(0, -1);
+    if(s.endsWith('#')) s = s.slice(0, -1);
     return s;
   }catch(e){ return raw; }
 }
